@@ -1,0 +1,38 @@
+# miprompt — example configuration
+#
+# Drop this at ~/.config/miprompt/config.toml (or $XDG_CONFIG_HOME/miprompt/).
+# Every field is optional: omit a key to use the built-in default. A missing or
+# malformed file falls back to defaults — the prompt never fails to render.
+#
+# Colors accept two forms:
+#   - ANSI name: "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white"
+#                and their "bright_" variants (e.g. "bright_blue").
+#                These follow your terminal THEME — change the theme, the prompt
+#                adapts automatically.
+#   - Hex:       "#7aa2f7" (or shorthand "#abc"). An exact 24-bit color, fixed
+#                regardless of terminal theme.
+
+# Visual style: "plain" (text + spaces) or "powerline" (colored blocks + arrows).
+style = "plain"
+
+# Put the prompt symbol on its own second line (type below the status row).
+symbol_on_new_line = false
+
+[cwd]
+color = "blue"
+
+[git]
+icon = ""          # branch glyph (Nerd Font); set "" to hide
+color = "yellow"
+dirty_color = "red" # recolors the whole git segment when the tree is dirty
+
+[node]
+icon = ""          # node glyph (Nerd Font); set "" to hide
+color = "green"
+show_active_version = false # run `node --version` (async) to show the ACTIVE version
+mismatch_color = "red"      # used when active version != version the project requests
+
+[symbol]
+char = "❯"
+success_color = "green"
+error_color = "red"
