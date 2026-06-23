@@ -24,11 +24,20 @@ type Config struct {
 	// type below the status row. When false (default): plain keeps the symbol at
 	// the end of the line as before; powerline omits the symbol entirely and ends
 	// on its closing arrow.
-	SymbolOnNewLine bool         `toml:"symbol_on_new_line"`
-	Cwd             CwdConfig    `toml:"cwd"`
-	Git             GitConfig    `toml:"git"`
-	Node            NodeConfig   `toml:"node"`
-	Symbol          SymbolConfig `toml:"symbol"`
+	SymbolOnNewLine bool           `toml:"symbol_on_new_line"`
+	Cwd             CwdConfig      `toml:"cwd"`
+	Git             GitConfig      `toml:"git"`
+	Node            NodeConfig     `toml:"node"`
+	Duration        DurationConfig `toml:"duration"`
+	Symbol          SymbolConfig   `toml:"symbol"`
+}
+
+// DurationConfig configures the last-command-duration segment.
+type DurationConfig struct {
+	MinMs int    `toml:"min_ms"` // only show when the command took at least this long
+	Icon  string `toml:"icon"`   // glyph before the duration
+	Color string `toml:"color"`  // text/fg color
+	Bg    string `toml:"bg"`     // powerline block bg; "" = same as Color
 }
 
 // CwdConfig configures the current-directory segment.
@@ -80,6 +89,11 @@ func defaultConfig() Config {
 		Style: "plain",
 		Cwd: CwdConfig{
 			Color: "blue",
+		},
+		Duration: DurationConfig{
+			MinMs: 2000, // only commands slower than 2s
+			Icon:  "",   // nf-md-timer_outline
+			Color: "yellow",
 		},
 		Symbol: SymbolConfig{
 			Char:         "❯",

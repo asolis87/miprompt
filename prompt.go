@@ -20,8 +20,8 @@ const colReset = "\x1b[0m"
 // mode + cacheFile decide how EXPENSIVE data is resolved: expensiveNone for the
 // instant fast prompt, expensiveCompute for the synchronous full prompt, and
 // expensiveCache to read async-computed results (the repaint path).
-func renderPrompt(s Shell, exitCode int, mode expensiveMode, cacheFile string, cfg Config) string {
-	status := buildStatusSegments(mode, cacheFile, cfg)
+func renderPrompt(s Shell, exitCode, cmdDuration int, mode expensiveMode, cacheFile string, cfg Config) string {
+	status := buildStatusSegments(cmdDuration, mode, cacheFile, cfg)
 	symbol := segmentSymbol(exitCode, cfg.Symbol)
 
 	statusLine := rendererFor(cfg).Render(s, status)
@@ -45,7 +45,7 @@ func renderPrompt(s Shell, exitCode int, mode expensiveMode, cacheFile string, c
 // buildStatusSegments assembles the ordered STATUS segments (everything except
 // the prompt symbol). Each helper returns plain content and color *names*; no
 // ANSI is emitted here.
-func buildStatusSegments(mode expensiveMode, cacheFile string, cfg Config) []Segment {
+func buildStatusSegments(cmdDuration int, mode expensiveMode, cacheFile string, cfg Config) []Segment {
 	var segs []Segment
 
 	segs = append(segs, segmentCwd(cfg))
@@ -64,6 +64,11 @@ func buildStatusSegments(mode expensiveMode, cacheFile string, cfg Config) []Seg
 	}
 	if node := readNodeInfo(nodeMode); node != nil {
 		segs = append(segs, segmentNode(node, cfg.Node))
+	}
+
+	// The duration segment only appears when the last command was slow enough.
+	if dur := segmentDuration(cmdDuration, cfg.Duration); dur != nil {
+		segs = append(segs, *dur)
 	}
 
 	return segs

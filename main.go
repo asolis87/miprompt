@@ -68,6 +68,7 @@ func runInit(args []string) {
 func runPrompt(args []string) {
 	shell := ShellZsh
 	exitCode := 0
+	cmdDuration := 0      // ms; measured by the shell and passed in
 	mode := expensiveNone // default: fast prompt, no expensive forks
 	cacheFile := ""
 
@@ -84,6 +85,13 @@ func runPrompt(args []string) {
 			i++
 			if i < len(args) {
 				exitCode, _ = strconv.Atoi(args[i])
+			}
+		case "--cmd-duration":
+			// Duration of the previous command in ms. The binary can't measure
+			// this (it's an ephemeral process); only the shell knows it.
+			i++
+			if i < len(args) {
+				cmdDuration, _ = strconv.Atoi(args[i])
 			}
 		case "--full":
 			// Compute all expensive data now (synchronous full prompt, e.g.
@@ -103,7 +111,7 @@ func runPrompt(args []string) {
 
 	// Use Print, not Println: a trailing newline would push the prompt onto
 	// its own line. The shell decides spacing.
-	fmt.Print(renderPrompt(shell, exitCode, mode, cacheFile, loadConfig()))
+	fmt.Print(renderPrompt(shell, exitCode, cmdDuration, mode, cacheFile, loadConfig()))
 }
 
 func usage() {

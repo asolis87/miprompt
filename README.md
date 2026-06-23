@@ -9,7 +9,7 @@ Starship and Powerlevel10k. Built as a single static Go binary.
   state, active node version) is computed in the background and the prompt is
   repainted when ready. Zero perceived lag even in large repos.
 - **Segments** — current directory, git branch + dirty marker + ahead/behind
-  vs upstream, Node.js version.
+  vs upstream, Node.js version, last-command duration (when slow).
 - **Two styles** — `plain` (colored text) and `powerline` (colored blocks with
   flowing separators).
 - **Full theming** — every color is configurable via ANSI names (follow the

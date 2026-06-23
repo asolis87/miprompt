@@ -27,9 +27,9 @@ func TestSweepNodeCaches(t *testing.T) {
 		return p
 	}
 
-	fresh := write(nodeCachePrefix+"fresh", 1*time.Hour)    // young: keep
-	stale := write(nodeCachePrefix+"stale", 48*time.Hour)   // old: remove
-	other := write("unrelated-file", 48*time.Hour)          // not ours: keep
+	fresh := write(nodeCachePrefix+"fresh", 1*time.Hour)  // young: keep
+	stale := write(nodeCachePrefix+"stale", 48*time.Hour) // old: remove
+	other := write("unrelated-file", 48*time.Hour)        // not ours: keep
 
 	sweepNodeCaches(24*time.Hour, now)
 

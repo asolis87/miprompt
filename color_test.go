@@ -27,7 +27,7 @@ func TestResolveFg(t *testing.T) {
 
 func TestResolveBg(t *testing.T) {
 	cases := []struct{ in, want string }{
-		{"red", "\x1b[41m"},        // base bg → 40–47
+		{"red", "\x1b[41m"},          // base bg → 40–47
 		{"bright_blue", "\x1b[104m"}, // bright bg → 100–107
 		{"#7aa2f7", "\x1b[48;2;122;162;247m"},
 		{"", ""},

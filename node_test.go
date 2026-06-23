@@ -9,16 +9,16 @@ func TestVersionsMatch(t *testing.T) {
 	}{
 		// Exact and prefix matches.
 		{"20.11.0", "20.11.0", true},
-		{"20", "20.11.0", true},     // .nvmrc often holds just the major
-		{"20.11", "20.11.0", true},  // major.minor
+		{"20", "20.11.0", true},       // .nvmrc often holds just the major
+		{"20.11", "20.11.0", true},    // major.minor
 		{"v20.11.0", "20.11.0", true}, // leading v
 		// Ranges are flexible by design → never warn, regardless of active.
 		{">=18", "18.4.0", true},
-		{">=18", "26.3.0", true},  // the case that slipped past the first test
+		{">=18", "26.3.0", true}, // the case that slipped past the first test
 		{"^20.0.0", "20.11.0", true},
 		{"^20.0.0", "26.3.0", true}, // even a "wrong" major: caret is a range, don't cry wolf
 		{"~16.1.0", "16.1.9", true},
-		{">=20", "18.4.0", true},  // we don't evaluate the comparator, just don't warn
+		{">=20", "18.4.0", true}, // we don't evaluate the comparator, just don't warn
 		// Real mismatches — PINNED requirement vs different active.
 		{"18.0.0", "26.3.0", false},
 		{"18", "26.3.0", false},

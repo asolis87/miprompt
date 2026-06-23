@@ -32,6 +32,25 @@ func initScript(s Shell) string {
 		// the FULL prompt and calls `zle reset-prompt` to repaint — the dirty
 		// marker appears with zero perceived lag.
 		return fmt.Sprintf(`_huginn_bin=%q
+zmodload zsh/datetime 2>/dev/null   # provides $EPOCHREALTIME for timing
+
+# preexec runs right before a command executes: stamp the start time. zsh has
+# no built-in command duration (unlike fish's $CMD_DURATION), so we measure it.
+_huginn_preexec() {
+  _huginn_start=$EPOCHREALTIME
+}
+
+# _huginn_duration_ms echoes the last command's duration in ms, or 0 if unknown
+# (e.g. the very first prompt, where no command has run yet).
+_huginn_duration_ms() {
+  if [[ -n "$_huginn_start" ]]; then
+    # EPOCHREALTIME is float seconds; (now-start)*1000 -> ms, integer.
+    printf '%%.0f' $(( (EPOCHREALTIME - _huginn_start) * 1000 ))
+    unset _huginn_start
+  else
+    print 0
+  fi
+}
 
 # Pass 2: handler invoked by `+"`zle -F`"+` when the async job's fd is ready.
 _huginn_async_done() {
@@ -51,16 +70,18 @@ _huginn_async_done() {
 
 _huginn_precmd() {
   local last=$?
+  local dur=$(_huginn_duration_ms)
 
   # Pass 1: instant FAST prompt (no dirty scan).
-  PROMPT="$("$_huginn_bin" prompt --shell zsh --exit-code $last)"
+  PROMPT="$("$_huginn_bin" prompt --shell zsh --exit-code $last --cmd-duration $dur)"
 
   # Pass 2: compute the FULL prompt (with dirty) in the background.
   _huginn_async_file="${TMPDIR:-/tmp}/huginn.$$"
-  exec {_huginn_fd}< <("$_huginn_bin" prompt --shell zsh --exit-code $last --full > "$_huginn_async_file"; printf '\n')
+  exec {_huginn_fd}< <("$_huginn_bin" prompt --shell zsh --exit-code $last --cmd-duration $dur --full > "$_huginn_async_file"; printf '\n')
   zle -F "$_huginn_fd" _huginn_async_done
 }
 
+preexec_functions+=(_huginn_preexec)
 precmd_functions+=(_huginn_precmd)`, bin)
 
 	case ShellBash:
@@ -97,7 +118,8 @@ end
 
 function fish_prompt
   # Pass 1: instant prompt, reading the dirty marker from cache (if any).
-  $_huginn_bin prompt --shell fish --exit-code $status --dirty-from $_huginn_cache
+  # fish provides $CMD_DURATION (ms) built-in — no manual timing needed.
+  $_huginn_bin prompt --shell fish --exit-code $status --cmd-duration $CMD_DURATION --dirty-from $_huginn_cache
 
   # Pass 2: kick off the async recompute, but only when pending — this is what
   # makes the repaint safe (a repaint finds pending=0 and does nothing).

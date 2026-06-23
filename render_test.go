@@ -102,7 +102,7 @@ func TestPowerlineSkipsBackgroundlessSegments(t *testing.T) {
 func TestSymbolLayoutNewLine(t *testing.T) {
 	cfg := defaultConfig()
 	cfg.SymbolOnNewLine = true
-	out := renderPrompt(ShellFish, 0, expensiveNone, "", cfg)
+	out := renderPrompt(ShellFish, 0, 0, expensiveNone, "", cfg)
 
 	if !strings.Contains(out, "\n") {
 		t.Errorf("symbol_on_new_line should put the symbol on its own line: %q", out)
@@ -117,7 +117,7 @@ func TestSymbolOmittedInPowerlineInline(t *testing.T) {
 	cfg.Style = "powerline"
 	cfg.SymbolOnNewLine = false
 	cfg.Symbol.Char = "❯"
-	out := renderPrompt(ShellFish, 0, expensiveNone, "", cfg)
+	out := renderPrompt(ShellFish, 0, 0, expensiveNone, "", cfg)
 
 	// Powerline inline ends on the closing arrow; the symbol is omitted.
 	if strings.Contains(out, "❯") {
