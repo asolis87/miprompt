@@ -143,10 +143,11 @@ func textColorOn(bg string) string {
 	return "\x1b[97m" // bright white text on dark backgrounds
 }
 
-// seq wraps an ANSI sequence in the shell's invisible-width delimiters. A nil/
-// empty sequence yields nothing.
+// seq wraps an ANSI sequence in the shell's invisible-width delimiters. An empty
+// sequence — or color disabled (NO_COLOR) — yields nothing, so no stray escapes
+// (including resets) leak into a no-color prompt.
 func seq(s Shell, ansi string) string {
-	if ansi == "" {
+	if ansi == "" || activeProfile == profileNone {
 		return ""
 	}
 	return s.wrapInvisible(ansi)

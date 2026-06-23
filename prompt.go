@@ -199,8 +199,13 @@ func segmentSymbol(exitCode int, cfg SymbolConfig) Segment {
 }
 
 // colorize wraps text in a color, marking the color codes as invisible so the
-// shell computes the prompt width correctly.
+// shell computes the prompt width correctly. With color disabled (NO_COLOR) it
+// emits the bare text — no color, no reset, no stray escapes. An empty color
+// likewise skips the wrapping (and the now-pointless reset).
 func colorize(s Shell, color, text string) string {
+	if activeProfile == profileNone || color == "" {
+		return text
+	}
 	return s.wrapInvisible(color) + text + s.wrapInvisible(colReset)
 }
 

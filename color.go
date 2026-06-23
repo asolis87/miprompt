@@ -13,20 +13,36 @@ import (
 //     regardless of the terminal theme.
 //
 // resolveFg / resolveBg turn either form into the right ANSI escape for the
-// foreground or background. Empty / unrecognized input yields "" (no color).
+// foreground or background, honoring the terminal's color profile (see
+// colorprofile.go): no color when NO_COLOR is set, and hex degraded to the
+// nearest named color on terminals without truecolor. Empty / unrecognized
+// input yields "" (no color).
 
 // resolveFg returns the foreground ANSI sequence for a color value.
 func resolveFg(value string) string {
+	if activeProfile == profileNone {
+		return ""
+	}
 	if r, g, b, ok := parseHex(value); ok {
-		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", r, g, b)
+		if activeProfile == profileTrueColor {
+			return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", r, g, b)
+		}
+		// No truecolor: degrade the hex to the nearest of the 16 ANSI colors.
+		return ansiNameFg(nearestANSIName(r, g, b))
 	}
 	return ansiNameFg(value)
 }
 
 // resolveBg returns the background ANSI sequence for a color value.
 func resolveBg(value string) string {
+	if activeProfile == profileNone {
+		return ""
+	}
 	if r, g, b, ok := parseHex(value); ok {
-		return fmt.Sprintf("\x1b[48;2;%d;%d;%dm", r, g, b)
+		if activeProfile == profileTrueColor {
+			return fmt.Sprintf("\x1b[48;2;%d;%d;%dm", r, g, b)
+		}
+		return ansiNameBg(nearestANSIName(r, g, b))
 	}
 	return ansiNameBg(value)
 }
