@@ -32,7 +32,11 @@ color = "blue"
 [git]
 icon = ""          # branch glyph (Nerd Font); set "" to hide
 color = "yellow"
-dirty_color = "red" # recolors the whole git segment when the tree is dirty
+dirty_color = "red"  # recolors the whole git segment when the tree is dirty
+ahead_icon = "↑"     # before the count of commits to push (vs upstream)
+behind_icon = "↓"    # before the count of commits to pull (vs upstream)
+# Note: ahead/behind compares against the upstream git already knows locally —
+# it never fetches, so counts reflect your last fetch/pull.
 
 [node]
 icon = ""          # node glyph (Nerd Font); set "" to hide

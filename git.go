@@ -4,14 +4,18 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
 // gitInfo holds the git state we want to surface in the prompt. It grows as we
-// add segments (ahead/behind, stashes, ...). A nil *gitInfo means "not in a repo".
+// add segments (stashes, ...). A nil *gitInfo means "not in a repo".
 type gitInfo struct {
-	branch string // branch name, or short commit hash when in detached HEAD
-	dirty  bool   // true when the working tree has uncommitted changes
+	branch      string // branch name, or short commit hash when in detached HEAD
+	dirty       bool   // true when the working tree has uncommitted changes
+	ahead       int    // local commits not in upstream ("need to push")
+	behind      int    // upstream commits not local ("need to pull")
+	hasUpstream bool   // false when the branch tracks no upstream (a/b N/A)
 }
 
 // expensiveMode selects how an EXPENSIVE piece of prompt data is resolved.
@@ -47,6 +51,12 @@ func readGitInfo(mode expensiveMode, cacheFile string) *gitInfo {
 	}
 
 	info := &gitInfo{branch: branch}
+
+	// ahead/behind is cheap (compares two refs, no working-tree scan — measured
+	// ~3ms over the branch), and it never touches the network, so we resolve it
+	// synchronously alongside the branch rather than on the async path.
+	info.ahead, info.behind, info.hasUpstream = gitAheadBehind()
+
 	switch mode {
 	case expensiveCompute:
 		info.dirty = gitDirty() // EXPENSIVE: scans the working tree.
@@ -54,6 +64,32 @@ func readGitInfo(mode expensiveMode, cacheFile string) *gitInfo {
 		info.dirty = readDirtyCache(cacheFile) // cheap: reads a one-byte file.
 	}
 	return info
+}
+
+// gitAheadBehind returns how many commits the current branch is ahead and behind
+// its upstream, and whether an upstream exists at all.
+//
+// It compares against the upstream ref git ALREADY knows locally — it does NOT
+// fetch. A prompt must never hit the network on every keystroke, so the counts
+// reflect the last time you fetched/pulled, which is the correct tradeoff.
+//
+// When the branch tracks no upstream (e.g. a fresh local branch never pushed),
+// the command fails and we report hasUpstream=false — distinct from "0 ahead,
+// 0 behind", which means up to date.
+func gitAheadBehind() (ahead, behind int, hasUpstream bool) {
+	// Output is "<behind>\t<ahead>": left side = commits in upstream not in HEAD,
+	// right side = commits in HEAD not in upstream.
+	out, err := exec.Command("git", "rev-list", "--count", "--left-right", "@{upstream}...HEAD").Output()
+	if err != nil {
+		return 0, 0, false // no upstream (or other failure): a/b does not apply
+	}
+	fields := strings.Fields(string(out))
+	if len(fields) != 2 {
+		return 0, 0, false
+	}
+	behind, _ = strconv.Atoi(fields[0])
+	ahead, _ = strconv.Atoi(fields[1])
+	return ahead, behind, true
 }
 
 // readDirtyCache reads a dirty result previously written by `compute-dirty`.
@@ -90,11 +126,12 @@ func writeDirtyCache(path string) bool {
 // on purpose, so its cost is visible before we move it off the critical path.
 //
 // Flags chosen for speed:
-//   --porcelain          stable, parseable output (not for humans)
-//   --untracked-files=no  do NOT scan for untracked files; we only care whether
-//                         tracked files changed. Scanning untracked content is
-//                         often the slowest part of status in repos with huge
-//                         ignored trees (node_modules, build output).
+//
+//	--porcelain          stable, parseable output (not for humans)
+//	--untracked-files=no  do NOT scan for untracked files; we only care whether
+//	                      tracked files changed. Scanning untracked content is
+//	                      often the slowest part of status in repos with huge
+//	                      ignored trees (node_modules, build output).
 func gitDirty() bool {
 	out, err := exec.Command("git", "status", "--porcelain", "--untracked-files=no").Output()
 	if err != nil {

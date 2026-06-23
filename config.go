@@ -51,6 +51,8 @@ type GitConfig struct {
 	Bg         string `toml:"bg"`          // powerline block bg; "" = same as Color
 	DirtyColor string `toml:"dirty_color"` // text/fg color when the tree is dirty
 	DirtyBg    string `toml:"dirty_bg"`    // powerline block bg when dirty; "" = DirtyColor
+	AheadIcon  string `toml:"ahead_icon"`  // glyph before the ahead count (commits to push)
+	BehindIcon string `toml:"behind_icon"` // glyph before the behind count (commits to pull)
 }
 
 // NodeConfig configures the Node.js segment.
@@ -88,9 +90,11 @@ func defaultConfig() Config {
 			Icon:       "", // nf-pl-branch (branch glyph)
 			Color:      "yellow",
 			DirtyColor: "red",
+			AheadIcon:  "↑",
+			BehindIcon: "↓",
 		},
 		Node: NodeConfig{
-			Icon:  "", // nf-dev-nodejs_small
+			Icon:          "", // nf-dev-nodejs_small
 			Color:         "green",
 			MismatchColor: "red",
 		},
@@ -139,4 +143,3 @@ func configPath() string {
 	}
 	return filepath.Join(home, ".config", "huginn", "config.toml")
 }
-

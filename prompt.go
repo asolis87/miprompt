@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -84,13 +85,24 @@ func segmentCwd(cfg Config) Segment {
 }
 
 // segmentGit describes the git state: a configurable icon, the branch name (or
-// short hash in detached HEAD), and a dot when dirty. A dirty tree recolors the
-// whole segment (dirty_color) — a single uniform color per segment is what lets
-// it render as one powerline block.
+// short hash in detached HEAD), ahead/behind counts vs upstream, and a dot when
+// dirty. A dirty tree recolors the whole segment (dirty_color) — a single
+// uniform color per segment is what lets it render as one powerline block.
 func segmentGit(git *gitInfo, cfg GitConfig) Segment {
 	label := git.branch
 	if cfg.Icon != "" {
 		label = cfg.Icon + " " + label
+	}
+
+	// ahead/behind only shows when there's an upstream AND a divergence — being
+	// up to date adds no marker, keeping the prompt quiet in the common case.
+	if git.hasUpstream {
+		if git.ahead > 0 {
+			label += " " + orDefault(cfg.AheadIcon, "↑") + strconv.Itoa(git.ahead)
+		}
+		if git.behind > 0 {
+			label += " " + orDefault(cfg.BehindIcon, "↓") + strconv.Itoa(git.behind)
+		}
 	}
 
 	fg := orDefault(cfg.Color, "yellow")
