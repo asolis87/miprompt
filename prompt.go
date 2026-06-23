@@ -66,6 +66,12 @@ func buildStatusSegments(cmdDuration int, mode expensiveMode, cacheFile string, 
 		segs = append(segs, segmentNode(node, cfg.Node))
 	}
 
+	// The python segment only appears when a virtualenv/conda env is active —
+	// read straight from the inherited environment, the cheapest source there is.
+	if py := readPythonInfo(); py != nil {
+		segs = append(segs, segmentPython(py, cfg.Python))
+	}
+
 	// The duration segment only appears when the last command was slow enough.
 	if dur := segmentDuration(cmdDuration, cfg.Duration); dur != nil {
 		segs = append(segs, *dur)

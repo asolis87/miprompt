@@ -44,6 +44,11 @@ color = "green"
 show_active_version = false # run `node --version` (async) to show the ACTIVE version
 mismatch_color = "red"      # used when active version != version the project requests
 
+# Active Python environment — shown when a virtualenv ($VIRTUAL_ENV) or conda
+# env ($CONDA_DEFAULT_ENV) is active. Read from the inherited environment.
+[python]
+color = "cyan"
+
 # Last-command duration — shown only when a command was slow enough, so quick
 # commands don't clutter the prompt. Humanized: "850ms", "1.5s", "2m30s", "1h2m".
 [duration]

@@ -28,8 +28,16 @@ type Config struct {
 	Cwd             CwdConfig      `toml:"cwd"`
 	Git             GitConfig      `toml:"git"`
 	Node            NodeConfig     `toml:"node"`
+	Python          PythonConfig   `toml:"python"`
 	Duration        DurationConfig `toml:"duration"`
 	Symbol          SymbolConfig   `toml:"symbol"`
+}
+
+// PythonConfig configures the active-Python-environment segment.
+type PythonConfig struct {
+	Icon  string `toml:"icon"`  // glyph before the env name
+	Color string `toml:"color"` // text/fg color
+	Bg    string `toml:"bg"`    // powerline block bg; "" = same as Color
 }
 
 // DurationConfig configures the last-command-duration segment.
@@ -89,6 +97,10 @@ func defaultConfig() Config {
 		Style: "plain",
 		Cwd: CwdConfig{
 			Color: "blue",
+		},
+		Python: PythonConfig{
+			Icon:  "", // nf-dev-python
+			Color: "cyan",
 		},
 		Duration: DurationConfig{
 			MinMs: 2000, // only commands slower than 2s
