@@ -111,7 +111,7 @@ func runPrompt(args []string) {
 
 	// Use Print, not Println: a trailing newline would push the prompt onto
 	// its own line. The shell decides spacing.
-	fmt.Print(renderPrompt(shell, exitCode, cmdDuration, mode, cacheFile, loadConfig()))
+	fmt.Print(safeRenderPrompt(shell, exitCode, cmdDuration, mode, cacheFile, loadConfig()))
 }
 
 func usage() {

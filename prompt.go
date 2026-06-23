@@ -11,6 +11,31 @@ import (
 // resolved from config names/hex by resolveFg/resolveBg (see color.go).
 const colReset = "\x1b[0m"
 
+// fallbackPrompt is the last-resort prompt emitted when rendering panics. Ugly
+// but always usable — a bare symbol so the user can keep typing. It carries no
+// color (nothing to reset) and is wrapped per shell only for the symbol itself.
+const fallbackPrompt = "❯ "
+
+// renderImpl is the function safeRenderPrompt calls to do the actual work. It is
+// a variable (not a direct call) so tests can swap in a panicking implementation
+// to verify the recovery net actually catches it.
+var renderImpl = renderPrompt
+
+// safeRenderPrompt is the single entry point for prompt rendering. It guarantees
+// the cardinal rule — the prompt ALWAYS renders something — by recovering from
+// any panic inside the render (a nil deref in a segment, a bad config value,
+// anything) and emitting a minimal fallback instead of a blank prompt or a stack
+// trace. A prompt runs on every keystroke; a crash here would make the terminal
+// unusable, so this net is non-negotiable.
+func safeRenderPrompt(s Shell, exitCode, cmdDuration int, mode expensiveMode, cacheFile string, cfg Config) (out string) {
+	defer func() {
+		if r := recover(); r != nil {
+			out = fallbackPrompt
+		}
+	}()
+	return renderImpl(s, exitCode, cmdDuration, mode, cacheFile, cfg)
+}
+
 // renderPrompt builds the full prompt for the given shell and previous exit
 // code. It now works in two phases: buildSegments produces the QUÉ (content +
 // intended colors), then the configured Renderer produces the CÓMO (plain vs

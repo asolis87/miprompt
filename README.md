@@ -57,6 +57,19 @@ end
 > Note: `huginn init fish | source`, NOT `eval`. fish's `eval` does not
 > reliably handle the multiline function/event-handler block.
 
+### bash
+
+Add to `~/.bashrc`:
+
+```sh
+eval "$(huginn init bash)"
+```
+
+> bash support is synchronous (it renders the full prompt, dirty included, in
+> one pass) because bash lacks an async prompt primitive. Command duration is
+> measured in whole seconds (portable across bash versions). zsh and fish get
+> the async, sub-second experience.
+
 ## Configuration
 
 Optional file at `~/.config/huginn/config.toml` (honors `$XDG_CONFIG_HOME`).

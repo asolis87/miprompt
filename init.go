@@ -85,8 +85,41 @@ preexec_functions+=(_huginn_preexec)
 precmd_functions+=(_huginn_precmd)`, bin)
 
 	case ShellBash:
-		return fmt.Sprintf(`_huginn_precmd() {
-  PS1="$(%q prompt --shell bash --exit-code $?)"
+		// Bash has no real async primitive (no zle -F, no --on-process-exit) and
+		// no native preexec, so we render the FULL prompt synchronously (--full,
+		// dirty included). Command duration is measured with a DEBUG trap.
+		//
+		// Timing is in whole SECONDS, not milliseconds: portable sub-second time
+		// needs GNU date (%N) or bash 5 ($EPOCHREALTIME), neither guaranteed (and
+		// macOS ships neither). `date +%s` is universal. Since the duration
+		// segment only shows commands past a multi-second threshold, second
+		// precision is plenty here.
+		//
+		// The DEBUG trap fires before every command — including each pipeline
+		// stage and PROMPT_COMMAND itself — so a guard flag stamps the start time
+		// only once per command line and clears it after the prompt renders.
+		return fmt.Sprintf(`_huginn_bin=%q
+
+_huginn_preexec() {
+  [[ -n "$_huginn_timing" ]] && return     # already timing this command line
+  [[ "$BASH_COMMAND" == "_huginn_precmd" ]] && return  # ignore the prompt hook
+  _huginn_timing=1
+  _huginn_start=$(date +%%s)                # whole seconds since epoch
+}
+trap '_huginn_preexec' DEBUG
+
+_huginn_precmd() {
+  local last=$?
+
+  # Duration in ms (seconds * 1000), or 0 if we never started timing.
+  local dur=0
+  if [[ -n "$_huginn_start" ]]; then
+    dur=$(( ($(date +%%s) - _huginn_start) * 1000 ))
+    unset _huginn_start
+  fi
+  _huginn_timing=
+
+  PS1="$("$_huginn_bin" prompt --shell bash --exit-code $last --cmd-duration $dur --full)"
 }
 PROMPT_COMMAND="_huginn_precmd"`, bin)
 
